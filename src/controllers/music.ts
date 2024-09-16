@@ -1,6 +1,8 @@
 import { Reference, Theme } from '@prisma/client'
 import prisma from '../config/prisma'
 import { Request, Response, NextFunction } from 'express'
+import path from 'path'
+import fs from 'fs'
 
 export async function getMusics(
 	req: Request,
@@ -96,12 +98,57 @@ export async function createMusic(
 				tempo,
 				bpm,
 				lyrics,
-				chords: '',
 			},
 			include: { themes: true, references: true },
 		})
 
 		res.status(201).json(newMusic)
+	} catch (error) {
+		next(error)
+	}
+}
+
+export async function uploadMusicPDF(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	const { id } = req.params
+
+	console.log(id, req.file?.filename)
+
+	if (!id || !req.file) {
+		return res.status(400).json({
+			status: 'error',
+			message: 'Music ID and PDF file are required',
+		})
+	}
+
+	try {
+		const music = await prisma.music.findUnique({ where: { id: parseInt(id) } })
+
+		if (!music) {
+			return res.status(404).json({
+				status: 'error',
+				message: 'Music not found',
+			})
+		}
+		const tempFilePath = path.join(
+			__dirname,
+			'../../public/chords',
+			req.file.filename
+		)
+		const newFileName = `${music.id}_${music.title.split(' ').join('_')}.pdf`
+		const newFilePath = path.join(__dirname, '../../public/chords', newFileName)
+
+		fs.renameSync(tempFilePath, newFilePath)
+
+		const updatedMusic = await prisma.music.update({
+			where: { id: parseInt(id) },
+			data: { chords: `/chords/${newFileName}` },
+		})
+
+		res.json(updatedMusic)
 	} catch (error) {
 		next(error)
 	}
@@ -165,7 +212,6 @@ export async function updateMusic(
 				tempo,
 				bpm,
 				lyrics,
-				chords: '',
 			},
 			include: { themes: true, references: true },
 		})
@@ -183,10 +229,46 @@ export async function deleteMusic(
 	const { id } = req.params
 
 	try {
-		await prisma.music.delete({ where: { id: parseInt(id)}})
+		await prisma.music.delete({ where: { id: parseInt(id) } })
 
 		res.status(204).send()
-	} catch(error) {
+	} catch (error) {
+		next(error)
+	}
+}
+
+export async function deleteMusicPDF(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	const { id } = req.params
+
+	try {
+		const music = await prisma.music.findUnique({ where: { id: parseInt(id) } })
+
+		if (!music || !music.chords) {
+			return res.status(404).json({
+				status: 'error',
+				message: 'Music or PDF not found',
+			})
+		}
+
+		const pdfPath = path.join(__dirname, '../../public', music.chords)
+
+		if (fs.existsSync(pdfPath)) {
+			fs.unlinkSync(pdfPath)
+		}
+
+		await prisma.music.update({
+			where: { id: parseInt(id) },
+			data: {
+				chords: null,
+			},
+		})
+
+		res.status(204).send()
+	} catch (error) {
 		next(error)
 	}
 }

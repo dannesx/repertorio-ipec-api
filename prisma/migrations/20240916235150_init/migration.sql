@@ -31,10 +31,15 @@ CREATE TABLE "themes" (
 -- CreateTable
 CREATE TABLE "references" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "book" TEXT NOT NULL,
-    "chapter" INTEGER NOT NULL,
-    "musicId" INTEGER,
-    CONSTRAINT "references_musicId_fkey" FOREIGN KEY ("musicId") REFERENCES "musics" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    "name" TEXT NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "_MusicReferences" (
+    "A" INTEGER NOT NULL,
+    "B" INTEGER NOT NULL,
+    CONSTRAINT "_MusicReferences_A_fkey" FOREIGN KEY ("A") REFERENCES "musics" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "_MusicReferences_B_fkey" FOREIGN KEY ("B") REFERENCES "references" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -53,6 +58,15 @@ CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "themes_name_key" ON "themes"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "references_name_key" ON "references"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "_MusicReferences_AB_unique" ON "_MusicReferences"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_MusicReferences_B_index" ON "_MusicReferences"("B");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "_MusicThemes_AB_unique" ON "_MusicThemes"("A", "B");
