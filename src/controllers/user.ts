@@ -1,4 +1,3 @@
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 import prisma from '../config/prisma'
 import { NextFunction, Request, Response } from 'express'
 

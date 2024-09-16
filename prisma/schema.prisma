@@ -20,3 +20,36 @@ model User {
 
   @@map("users")
 }
+
+model Music {
+  id         Int         @id @default(autoincrement())
+  title      String
+  artist     String
+  references Reference[] @relation("MusicReferences")
+  themes     Theme[]     @relation("MusicThemes")
+  key        String?
+  tempo      String?
+  bpm        Int?
+  lyrics     String?
+  chords     String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@map("musics")
+}
+
+model Theme {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique
+  music Music[] @relation("MusicThemes")
+
+  @@map("themes")
+}
+
+model Reference {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique
+  music Music[] @relation("MusicReferences")
+
+  @@map("references")
+}
